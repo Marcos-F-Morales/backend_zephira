@@ -3,10 +3,10 @@ const Talla = db.tallas;
 
 exports.create = async (req, res) => {
   try {
-    const { numero } = req.body;
-    if (!numero) return res.status(400).json({ message: "Falta el nombre de la talla" });
+    const { talla } = req.body;
+    if (!talla) return res.status(400).json({ message: "Falta el nombre de la talla" });
 
-    const nuevaTalla = await Talla.create({ numero });
+    const nuevaTalla = await Talla.create({ talla });
     return res.status(201).json({ message: "Talla creada", talla: nuevaTalla });
   } catch (error) {
     console.error(error);
