@@ -53,7 +53,7 @@ db.sequelize.sync()
 // Rutas base
 // ==========================
 app.get("/", (req, res) => {
-  res.json({ message: "Bienvenido a nuestra Tienda de Zapatos" });
+  res.json({ message: "Bienvenido a nuestra Tienda Zephira" });
 });
 
 // ==========================
