@@ -10,10 +10,24 @@ exports.create = async (req, res) => {
       return res.status(400).json({ message: "Faltan datos obligatorios." });
     }
 
-    const nuevoProducto = await Producto.create({ nombre, descripcion, precio, marca, estilo, imagenUrl });
+    // Asegurarse que precio sea número
+    const precioNum = parseFloat(precio);
+    if (isNaN(precioNum)) {
+      return res.status(400).json({ message: "El precio debe ser un número válido." });
+    }
+
+    const nuevoProducto = await Producto.create({
+      nombre,
+      descripcion,
+      precio: precioNum,
+      marca,
+      estilo,
+      imagenUrl,
+    });
+
     return res.status(201).json({ message: "Producto creado", producto: nuevoProducto });
   } catch (error) {
-    console.error(error);
+    console.error("Error al crear producto:", error);
     return res.status(500).json({ message: "Error al crear producto" });
   }
 };
@@ -51,7 +65,15 @@ exports.update = async (req, res) => {
     const producto = await Producto.findByPk(id);
     if (!producto) return res.status(404).json({ message: "Producto no encontrado" });
 
-    await producto.update({ nombre, descripcion, precio, marca, estilo, imagenUrl });
+    await producto.update({
+      nombre,
+      descripcion,
+      precio: parseFloat(precio),
+      marca,
+      estilo,
+      imagenUrl,
+    });
+
     return res.status(200).json({ message: "Producto actualizado", producto });
   } catch (error) {
     console.error(error);
