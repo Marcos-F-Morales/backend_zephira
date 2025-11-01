@@ -1,15 +1,7 @@
 module.exports = (sequelize, DataTypes) => {
   const Inventario = sequelize.define("inventario", {
-    id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
-    },
-    cantidad: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: 0,
-    },
+    id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    cantidad: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
   });
 
   Inventario.associate = (models) => {
