@@ -6,14 +6,13 @@ exports.create = async (req, res) => {
   try {
     const { nombre, descripcion, precio, marca, estilo, imagenUrl } = req.body;
 
-    if (!nombre || !precio) {
+    if (!nombre || precio === undefined) {
       return res.status(400).json({ message: "Faltan datos obligatorios." });
     }
 
-    // Asegurarse que precio sea número
     const precioNum = parseFloat(precio);
     if (isNaN(precioNum)) {
-      return res.status(400).json({ message: "El precio debe ser un número válido." });
+      return res.status(400).json({ message: "Precio inválido" });
     }
 
     const nuevoProducto = await Producto.create({
@@ -28,7 +27,7 @@ exports.create = async (req, res) => {
     return res.status(201).json({ message: "Producto creado", producto: nuevoProducto });
   } catch (error) {
     console.error("Error al crear producto:", error);
-    return res.status(500).json({ message: "Error al crear producto" });
+    return res.status(500).json({ message: "Error al crear producto", detalle: error.message });
   }
 };
 
@@ -38,8 +37,8 @@ exports.findAll = async (req, res) => {
     const productos = await Producto.findAll();
     return res.status(200).json(productos);
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Error al obtener productos" });
+    console.error("Error al obtener productos:", error);
+    return res.status(500).json({ message: "Error al obtener productos", detalle: error.message });
   }
 };
 
@@ -51,8 +50,8 @@ exports.findOne = async (req, res) => {
     if (!producto) return res.status(404).json({ message: "Producto no encontrado" });
     return res.status(200).json(producto);
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Error al obtener producto" });
+    console.error("Error al obtener producto:", error);
+    return res.status(500).json({ message: "Error al obtener producto", detalle: error.message });
   }
 };
 
@@ -65,10 +64,15 @@ exports.update = async (req, res) => {
     const producto = await Producto.findByPk(id);
     if (!producto) return res.status(404).json({ message: "Producto no encontrado" });
 
+    const precioNum = parseFloat(precio);
+    if (isNaN(precioNum)) {
+      return res.status(400).json({ message: "Precio inválido" });
+    }
+
     await producto.update({
       nombre,
       descripcion,
-      precio: parseFloat(precio),
+      precio: precioNum,
       marca,
       estilo,
       imagenUrl,
@@ -76,8 +80,8 @@ exports.update = async (req, res) => {
 
     return res.status(200).json({ message: "Producto actualizado", producto });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Error al actualizar producto" });
+    console.error("Error al actualizar producto:", error);
+    return res.status(500).json({ message: "Error al actualizar producto", detalle: error.message });
   }
 };
 
@@ -91,7 +95,7 @@ exports.delete = async (req, res) => {
     await producto.destroy();
     return res.status(200).json({ message: "Producto eliminado" });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Error al eliminar producto" });
+    console.error("Error al eliminar producto:", error);
+    return res.status(500).json({ message: "Error al eliminar producto", detalle: error.message });
   }
 };
