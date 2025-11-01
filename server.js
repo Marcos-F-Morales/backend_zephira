@@ -1,6 +1,3 @@
-// ==========================
-// Importamos módulos
-// ==========================
 require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -19,25 +16,23 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Permitir solicitudes sin origen (como Postman)
-    if (!origin) return callback(null, true);
+    if (!origin) return callback(null, true); // Permite Postman
     if (allowedOrigins.includes(origin)) return callback(null, true);
     return callback(new Error("CORS no permitido para este origen"));
   },
   credentials: true,
 }));
 
-// 🔹 Manejar preflight OPTIONS automáticamente
 app.options(/.*/, cors());
 
 // ==========================
-// Middleware para parsear JSON y formularios
+// Middleware
 // ==========================
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // ==========================
-// Conexión con la base de datos
+// Conexión con base de datos
 // ==========================
 const db = require("./app/models");
 
@@ -50,54 +45,30 @@ db.sequelize.sync()
   });
 
 // ==========================
-// Rutas base
+// Ruta raíz
 // ==========================
 app.get("/", (req, res) => {
-  res.json({ message: "Bienvenido a nuestra Tienda Zephira" });
+  res.json({ message: "Bienvenido a Zephira API 🚀" });
 });
 
 // ==========================
-//   RUTAS DEL PROYECTO
+// Rutas del proyecto
 // ==========================
-
-// 🔥 Eliminadas las rutas innecesarias:
-// require("./app/routes/promocion.routes")(app);
-// require("./app/routes/productopromocion.routes")(app);
-
-require("./app/routes/inventario.routes")(app);
-require("./app/routes/catalogo.routes")(app);
-require("./app/routes/estadoenvio.routes")(app);
-require("./app/routes/dashboard.routes.js")(app);
-
-// ==========================
-//   RUTAS CON ROUTERS EXTERNOS
-// ==========================
-const usuarioRoutes = require("./app/routes/usuario.routes.js");
-const productoRoutes = require("./app/routes/producto.routes.js");
-const tallaRoutes = require("./app/routes/talla.routes.js");
-const colorRoutes = require("./app/routes/color.routes.js");
-const sucursalRoutes = require("./app/routes/sucursal.routes.js");
-const carritoDetalleRoutes = require("./app/routes/carritoDetalle.routes.js");
-const wishlistDetalleRoutes = require("./app/routes/wishlistdetalle.routes");
-const carritoRoutes = require("./app/routes/carrito.routes");
-const wishlistRoutes = require("./app/routes/wishlist.routes");
-const facturaRoutes = require("./app/routes/factura.routes.js");
-const envioRoutes = require("./app/routes/envio.routes.js");
-
-// ==========================
-//   USO DE RUTAS
-// ==========================
-app.use("/api/Envios", envioRoutes);
-app.use("/api/facturas", facturaRoutes);
-app.use("/api/wishlists", wishlistRoutes);
-app.use("/api/carrito", carritoRoutes);
-app.use("/api/wishlistDetalles", wishlistDetalleRoutes);
-app.use("/api/carritodetalles", carritoDetalleRoutes);
-app.use("/api/usuarios", usuarioRoutes);
-app.use("/api/productos", productoRoutes);
-app.use("/api/tallas", tallaRoutes);
-app.use("/api/colores", colorRoutes);
-app.use("/api/sucursales", sucursalRoutes);
+app.use("/api/usuarios", require("./app/routes/usuario.routes.js"));
+app.use("/api/productos", require("./app/routes/producto.routes.js"));
+app.use("/api/tallas", require("./app/routes/talla.routes.js"));
+app.use("/api/colores", require("./app/routes/color.routes.js"));
+app.use("/api/sucursales", require("./app/routes/sucursal.routes.js"));
+app.use("/api/carritodetalles", require("./app/routes/carritoDetalle.routes.js"));
+app.use("/api/wishlistDetalles", require("./app/routes/wishlistdetalle.routes.js"));
+app.use("/api/carrito", require("./app/routes/carrito.routes.js"));
+app.use("/api/wishlists", require("./app/routes/wishlist.routes.js"));
+app.use("/api/facturas", require("./app/routes/factura.routes.js"));
+app.use("/api/Envios", require("./app/routes/envio.routes.js"));
+app.use("/api/inventario", require("./app/routes/inventario.routes.js"));
+app.use("/api/catalogo", require("./app/routes/catalogo.routes.js"));
+app.use("/api/estadoenvio", require("./app/routes/estadoenvio.routes.js"));
+app.use("/api/dashboard", require("./app/routes/dashboard.routes.js"));
 
 // ==========================
 // Servidor

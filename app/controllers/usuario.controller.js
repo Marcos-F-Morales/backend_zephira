@@ -9,21 +9,17 @@ exports.create = async (req, res) => {
   try {
     const { nombre, email, contrasena, Rol, direccion, telefono } = req.body;
 
-    // Validar campos requeridos
     if (!nombre || !email || !contrasena || !Rol) {
       return res.status(400).json({ message: "Faltan datos obligatorios." });
     }
 
-    // Revisar si el email ya existe
     const usuarioExistente = await Usuario.findOne({ where: { email } });
     if (usuarioExistente) {
       return res.status(400).json({ message: "El email ya está registrado." });
     }
 
-    // Hashear contraseña
     const hash = await bcrypt.hash(contrasena, 10);
 
-    // Crear usuario
     const nuevoUsuario = await Usuario.create({
       nombre,
       email,
@@ -33,11 +29,10 @@ exports.create = async (req, res) => {
       telefono: telefono || null,
     });
 
-    // Crear carrito y wishlist para el usuario
     await Carrito.create({ usuarioId: nuevoUsuario.id });
     await Wishlist.create({ usuarioId: nuevoUsuario.id });
 
-    return res.status(201).json({
+    res.status(201).json({
       message: "Usuario creado correctamente.",
       usuario: {
         id: nuevoUsuario.id,
@@ -48,7 +43,7 @@ exports.create = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Error en create:", error);
-    return res.status(500).json({ message: "Error al crear usuario." });
+    res.status(500).json({ message: "Error al crear usuario." });
   }
 };
 
@@ -61,26 +56,22 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "Faltan datos obligatorios." });
     }
 
-    // Buscar usuario por email
     const usuario = await Usuario.findOne({ where: { email } });
     if (!usuario) {
       return res.status(404).json({ message: "Usuario no encontrado." });
     }
 
-    // Comparar contraseñas (texto plano vs hash)
     const esValido = await bcrypt.compare(contrasena, usuario.contrasena);
     if (!esValido) {
       return res.status(401).json({ message: "Contraseña incorrecta." });
     }
 
-    // Buscar carrito del usuario
     const carrito = await Carrito.findOne({ where: { usuarioId: usuario.id } });
     if (!carrito) {
-      return res.status(404).json({ message: "No se encontró el carrito del usuario." });
+      await Carrito.create({ usuarioId: usuario.id });
     }
 
-    // ✅ Login exitoso → devolvemos datos del usuario y su carrito (sin contraseña)
-    return res.status(200).json({
+    res.status(200).json({
       message: "Login exitoso.",
       usuario: {
         id: usuario.id,
@@ -88,33 +79,27 @@ exports.login = async (req, res) => {
         email: usuario.email,
         Rol: usuario.Rol,
       },
-      carrito: {
-        id: carrito.id,
-        usuarioId: carrito.usuarioId,
-      },
     });
   } catch (error) {
     console.error("❌ Error en login:", error);
-    return res.status(500).json({ message: "Error en login." });
+    res.status(500).json({ message: "Error en login." });
   }
 };
 
-// 📌 Obtener todos los usuarios (sin contraseñas)
+// 📌 Obtener todos los usuarios
 exports.getAll = async (req, res) => {
   try {
     const usuarios = await Usuario.findAll({
-      attributes: { exclude: ["contrasena"] }, // 👈 excluye el campo contraseña
+      attributes: { exclude: ["contrasena"] },
     });
-
-    return res.status(200).json(usuarios);
+    res.status(200).json(usuarios);
   } catch (error) {
     console.error("❌ Error en getAll:", error);
-    return res.status(500).json({ message: "Error al obtener los usuarios." });
+    res.status(500).json({ message: "Error al obtener usuarios." });
   }
 };
 
-
-// 📌 Obtener un usuario por ID (sin contraseña)
+// 📌 Obtener usuario por ID
 exports.getById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -126,10 +111,9 @@ exports.getById = async (req, res) => {
       return res.status(404).json({ message: "Usuario no encontrado." });
     }
 
-    return res.status(200).json(usuario);
+    res.status(200).json(usuario);
   } catch (error) {
     console.error("❌ Error en getById:", error);
-    return res.status(500).json({ message: "Error al obtener el usuario." });
+    res.status(500).json({ message: "Error al obtener usuario." });
   }
 };
-
