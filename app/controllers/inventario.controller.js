@@ -6,7 +6,7 @@ exports.create = async (req, res) => {
   try {
     const { productoId, tallaId, colorId, sucursalId, cantidad } = req.body;
 
-    if (!productoId || !tallaId || !colorId || !sucursalId || !cantidad) {
+    if (!productoId || !tallaId || !colorId || !sucursalId) {
       return res.status(400).json({ message: "Faltan datos obligatorios." });
     }
 
@@ -15,12 +15,13 @@ exports.create = async (req, res) => {
       tallaId,
       colorId,
       sucursalId,
-      cantidad,
+      cantidad: parseInt(cantidad) || 0,
     });
 
-    res.status(201).json(nuevoInventario);
+    res.status(201).json({ message: "Inventario creado", inventario: nuevoInventario });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Error al crear inventario:", error);
+    res.status(500).json({ message: "Error al crear inventario", detalle: error.message });
   }
 };
 
@@ -32,18 +33,22 @@ exports.findAll = async (req, res) => {
     });
     res.json(inventarios);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Error al obtener inventarios:", error);
+    res.status(500).json({ message: "Error al obtener inventarios", detalle: error.message });
   }
 };
 
 // Obtener un inventario por ID
 exports.findOne = async (req, res) => {
   try {
-    const inventario = await Inventario.findByPk(req.params.id);
+    const inventario = await Inventario.findByPk(req.params.id, {
+      include: ["producto", "talla", "color", "sucursal"],
+    });
     if (!inventario) return res.status(404).json({ message: "Inventario no encontrado" });
     res.json(inventario);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Error al obtener inventario:", error);
+    res.status(500).json({ message: "Error al obtener inventario", detalle: error.message });
   }
 };
 
@@ -56,7 +61,8 @@ exports.update = async (req, res) => {
     if (!updated) return res.status(404).json({ message: "Inventario no encontrado" });
     res.json({ message: "Inventario actualizado correctamente" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Error al actualizar inventario:", error);
+    res.status(500).json({ message: "Error al actualizar inventario", detalle: error.message });
   }
 };
 
@@ -69,6 +75,7 @@ exports.delete = async (req, res) => {
     if (!deleted) return res.status(404).json({ message: "Inventario no encontrado" });
     res.json({ message: "Inventario eliminado correctamente" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Error al eliminar inventario:", error);
+    res.status(500).json({ message: "Error al eliminar inventario", detalle: error.message });
   }
 };

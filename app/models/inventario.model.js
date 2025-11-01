@@ -12,6 +12,12 @@ module.exports = (sequelize, DataTypes) => {
     },
   });
 
-  // Relaciones se definirán en index.js (productoId, sucursalId, colorId, tallaId)
+  Inventario.associate = (models) => {
+    Inventario.belongsTo(models.productos, { foreignKey: "productoId", as: "producto" });
+    Inventario.belongsTo(models.colores, { foreignKey: "colorId", as: "color" });
+    Inventario.belongsTo(models.tallas, { foreignKey: "tallaId", as: "talla" });
+    Inventario.belongsTo(models.sucursales, { foreignKey: "sucursalId", as: "sucursal" });
+  };
+
   return Inventario;
 };
