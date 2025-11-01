@@ -1,8 +1,8 @@
-// usamos la función require para cargar el módulo db.config.js para traer los parámetros preconfigurados de la BD
+// ==============================
+// 🔹 Configuración y conexión BD
+// ==============================
 const dbConfig = require("../config/db.config.js");
-// cargamos el módulo sequelize "ORM" para el manejo de las entidades como objetos. 
 const Sequelize = require("sequelize");
-// creamos una variable sequelize y la inicializamos como un Objeto Sequelize con la información de la BD 
 const DataTypes = Sequelize.DataTypes;
 
 // Conexión a Neon PostgreSQL (SSL habilitado)
@@ -12,24 +12,28 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   dialectOptions: {
     ssl: {
       require: true,
-      rejectUnauthorized: false
-    }
+      rejectUnauthorized: false,
+    },
   },
   pool: {
     max: dbConfig.pool.max,
     min: dbConfig.pool.min,
     acquire: dbConfig.pool.acquire,
-    idle: dbConfig.pool.idle
+    idle: dbConfig.pool.idle,
   },
-  logging: false
+  logging: false,
 });
 
-// creamos un objeto db
+// ==============================
+// 🔹 Inicialización del objeto DB
+// ==============================
 const db = {};
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
-// ================== IMPORTACIÓN DE MODELOS ==================
+// ==============================
+// 🔹 Importación de modelos
+// ==============================
 db.usuarios = require("./usuario.model.js")(sequelize, DataTypes);
 db.sucursales = require("./sucursal.model.js")(sequelize, DataTypes);
 db.productos = require("./producto.model.js")(sequelize, DataTypes);
@@ -45,57 +49,146 @@ db.envios = require("./envio.model.js")(sequelize, DataTypes);
 db.wishlists = require("./Wishlist.model.js")(sequelize, DataTypes);
 db.wishlistDetalles = require("./wishlistdetalle.model.js")(sequelize, DataTypes);
 
-// ================= MODELOS Y RELACIONES =================
+// ===========================================================
+// 🔹 Relaciones entre modelos (con alias consistentes)
+// ===========================================================
 
 // Productos, Colores, Tallas, Sucursales, Inventario
-db.productos.hasMany(db.inventarios, { foreignKey: "productoId" });
-db.inventarios.belongsTo(db.productos, { foreignKey: "productoId" });
+db.productos.hasMany(db.inventarios, {
+  as: "inventarios",
+  foreignKey: "productoId",
+});
+db.inventarios.belongsTo(db.productos, {
+  as: "producto",
+  foreignKey: "productoId",
+});
 
-db.colores.hasMany(db.inventarios, { foreignKey: "colorId" });
-db.inventarios.belongsTo(db.colores, { foreignKey: "colorId" });
+db.colores.hasMany(db.inventarios, {
+  as: "inventarios",
+  foreignKey: "colorId",
+});
+db.inventarios.belongsTo(db.colores, {
+  as: "color",
+  foreignKey: "colorId",
+});
 
-db.tallas.hasMany(db.inventarios, { foreignKey: "tallaId" });
-db.inventarios.belongsTo(db.tallas, { foreignKey: "tallaId" });
+db.tallas.hasMany(db.inventarios, {
+  as: "inventarios",
+  foreignKey: "tallaId",
+});
+db.inventarios.belongsTo(db.tallas, {
+  as: "talla",
+  foreignKey: "tallaId",
+});
 
-db.sucursales.hasMany(db.inventarios, { foreignKey: "sucursalId" });
-db.inventarios.belongsTo(db.sucursales, { foreignKey: "sucursalId" });
+db.sucursales.hasMany(db.inventarios, {
+  as: "inventarios",
+  foreignKey: "sucursalId",
+});
+db.inventarios.belongsTo(db.sucursales, {
+  as: "sucursal",
+  foreignKey: "sucursalId",
+});
 
 // Usuario -> Carrito -> CarritoDetalle -> Inventario
-db.usuarios.hasOne(db.carritos, { foreignKey: "usuarioId" });
-db.carritos.belongsTo(db.usuarios, { foreignKey: "usuarioId" });
+db.usuarios.hasOne(db.carritos, { as: "carrito", foreignKey: "usuarioId" });
+db.carritos.belongsTo(db.usuarios, { as: "usuario", foreignKey: "usuarioId" });
 
-db.carritos.hasMany(db.carritoDetalles, { foreignKey: "carritoId" });
-db.carritoDetalles.belongsTo(db.carritos, { foreignKey: "carritoId" });
+db.carritos.hasMany(db.carritoDetalles, {
+  as: "detalles",
+  foreignKey: "carritoId",
+});
+db.carritoDetalles.belongsTo(db.carritos, {
+  as: "carrito",
+  foreignKey: "carritoId",
+});
 
-db.inventarios.hasMany(db.carritoDetalles, { foreignKey: "inventarioId" });
-db.carritoDetalles.belongsTo(db.inventarios, { foreignKey: "inventarioId" });
+db.inventarios.hasMany(db.carritoDetalles, {
+  as: "detalles",
+  foreignKey: "inventarioId",
+});
+db.carritoDetalles.belongsTo(db.inventarios, {
+  as: "inventario",
+  foreignKey: "inventarioId",
+});
 
-// FacturaEncabezado -> Usuario, FacturaDetalle, Envio
-db.usuarios.hasMany(db.facturaEncabezados, { foreignKey: "usuarioId" });
-db.facturaEncabezados.belongsTo(db.usuarios, { foreignKey: "usuarioId" });
+// FacturaEncabezado -> Usuario, FacturaDetalle, Envío
+db.usuarios.hasMany(db.facturaEncabezados, {
+  as: "facturas",
+  foreignKey: "usuarioId",
+});
+db.facturaEncabezados.belongsTo(db.usuarios, {
+  as: "usuario",
+  foreignKey: "usuarioId",
+});
 
-db.facturaEncabezados.hasMany(db.facturaDetalles, { foreignKey: "facturaId" });
-db.facturaDetalles.belongsTo(db.facturaEncabezados, { foreignKey: "facturaId" });
+db.facturaEncabezados.hasMany(db.facturaDetalles, {
+  as: "detalles",
+  foreignKey: "facturaId",
+});
+db.facturaDetalles.belongsTo(db.facturaEncabezados, {
+  as: "factura",
+  foreignKey: "facturaId",
+});
 
-db.inventarios.hasMany(db.facturaDetalles, { foreignKey: "inventarioId" });
-db.facturaDetalles.belongsTo(db.inventarios, { foreignKey: "inventarioId" });
+db.inventarios.hasMany(db.facturaDetalles, {
+  as: "detallesFactura",
+  foreignKey: "inventarioId",
+});
+db.facturaDetalles.belongsTo(db.inventarios, {
+  as: "inventario",
+  foreignKey: "inventarioId",
+});
 
-db.facturaEncabezados.hasOne(db.envios, { foreignKey: "facturaId" });
-db.envios.belongsTo(db.facturaEncabezados, { foreignKey: "facturaId" });
+db.facturaEncabezados.hasOne(db.envios, {
+  as: "envio",
+  foreignKey: "facturaId",
+});
+db.envios.belongsTo(db.facturaEncabezados, {
+  as: "factura",
+  foreignKey: "facturaId",
+});
 
-db.estadoEnvios.hasMany(db.envios, { foreignKey: "estadoId" });
-db.envios.belongsTo(db.estadoEnvios, { foreignKey: "estadoId" });
+db.estadoEnvios.hasMany(db.envios, {
+  as: "envios",
+  foreignKey: "estadoId",
+});
+db.envios.belongsTo(db.estadoEnvios, {
+  as: "estado",
+  foreignKey: "estadoId",
+});
 
 // Wishlist
-db.usuarios.hasMany(db.wishlists, { foreignKey: "usuarioId" });
-db.wishlists.belongsTo(db.usuarios, { foreignKey: "usuarioId" });
+db.usuarios.hasMany(db.wishlists, {
+  as: "wishlists",
+  foreignKey: "usuarioId",
+});
+db.wishlists.belongsTo(db.usuarios, {
+  as: "usuario",
+  foreignKey: "usuarioId",
+});
 
-db.wishlists.hasMany(db.wishlistDetalles, { foreignKey: "wishlistId" });
-db.wishlistDetalles.belongsTo(db.wishlists, { foreignKey: "wishlistId" });
+db.wishlists.hasMany(db.wishlistDetalles, {
+  as: "detalles",
+  foreignKey: "wishlistId",
+});
+db.wishlistDetalles.belongsTo(db.wishlists, {
+  as: "wishlist",
+  foreignKey: "wishlistId",
+});
 
-db.inventarios.hasMany(db.wishlistDetalles, { foreignKey: "inventarioId" });
-db.wishlistDetalles.belongsTo(db.inventarios, { foreignKey: "inventarioId" });
+db.inventarios.hasMany(db.wishlistDetalles, {
+  as: "wishlistDetalles",
+  foreignKey: "inventarioId",
+});
+db.wishlistDetalles.belongsTo(db.inventarios, {
+  as: "inventario",
+  foreignKey: "inventarioId",
+});
 
-// ✅ Eliminadas todas las relaciones con `promociones` y `productoPromociones`
+// ✅ Eliminadas todas las referencias a promociones y productoPromociones
 
+// ===========================================================
+// 🔹 Exportación final
+// ===========================================================
 module.exports = db;
