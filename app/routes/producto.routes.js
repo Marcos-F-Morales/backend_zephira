@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const ProductoController = require("../controllers/producto.controller.js");
 
-// Crear producto
+// Crear producto + inventarios
 router.post("/create", ProductoController.create);
 
 // Listar todos los productos

@@ -65,7 +65,7 @@ app.use("/api/carrito", require("./app/routes/carrito.routes.js"));
 app.use("/api/wishlists", require("./app/routes/wishlist.routes.js"));
 app.use("/api/facturas", require("./app/routes/factura.routes.js"));
 app.use("/api/envios", require("./app/routes/envio.routes.js"));
-app.use("/api/inventarios", require("./app/routes/inventario.routes.js")); // 🔹 corregido
+app.use("/api/inventarios", require("./app/routes/inventario.routes.js"));
 app.use("/api/catalogo", require("./app/routes/catalogo.routes.js"));
 app.use("/api/estadoenvio", require("./app/routes/estadoenvio.routes.js"));
 app.use("/api/dashboard", require("./app/routes/dashboard.routes.js"));
