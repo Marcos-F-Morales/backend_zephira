@@ -1,4 +1,4 @@
-// controllers/factura.controller.js
+// controllers/Factura.controller.js
 const db = require("../models");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
@@ -6,27 +6,17 @@ const Factura = db.facturaEncabezados;
 const FacturaDetalle = db.facturaDetalles;
 const Usuario = db.usuarios;
 const Envio = db.envios;
-const EstadoEnvio = db.estadoEnvios;
-const Promocion = db.promociones;
 const Inventario = db.inventarios;
 const Producto = db.productos;
 
 exports.create = async (req, res) => {
-  const {
-    usuarioId,
-    direccionEnvio,
-    detalles, // [{ inventarioId, cantidad }]
-    promocionId,
-    paymentMethodId // <-- viene del frontend
-  } = req.body;
+  const { usuarioId, direccionEnvio, detalles, paymentMethodId } = req.body;
 
-  if (!Array.isArray(detalles) || detalles.length === 0) {
+  if (!Array.isArray(detalles) || detalles.length === 0)
     return res.status(400).json({ message: "Detalles inválidos" });
-  }
 
-  if (!paymentMethodId) {
+  if (!paymentMethodId)
     return res.status(400).json({ message: "Falta paymentMethodId" });
-  }
 
   const t = await db.sequelize.transaction();
 
@@ -39,61 +29,38 @@ exports.create = async (req, res) => {
       const invId = parseInt(item.inventarioId, 10);
       const qty = parseInt(item.cantidad, 10);
 
-      if (Number.isNaN(invId) || Number.isNaN(qty)) {
+      if (Number.isNaN(invId) || Number.isNaN(qty))
         throw new Error("InventarioId o cantidad inválidos");
-      }
 
       const inventario = await Inventario.findByPk(invId, {
-        include: [{ model: Producto }],
+        include: [{ model: Producto, as: "producto" }],
       });
+
       if (!inventario) throw new Error("Inventario no encontrado");
 
       subtotal += inventario.producto.precio * qty;
     }
 
+    const iva = subtotal * 0.12;
+    const total = subtotal + iva;
+
     // -----------------------
-    // Aplicar promoción
+    // Crear PaymentIntent
     // -----------------------
-    let descuento = 0;
-    if (promocionId) {
-      const promo = await Promocion.findByPk(promocionId);
-      if (promo && promo.activo) {
-        descuento = (subtotal * promo.descuento) / 100;
-      }
-    }
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(total * 100),
+      currency: "gtq",
+      payment_method: paymentMethodId,
+      confirm: true,
+      description: "Pago de factura Tienda Online",
+      automatic_payment_methods: { enabled: true, allow_redirects: "never" },
+    });
 
-    const subtotalConDescuento = subtotal - descuento;
-    const iva = subtotalConDescuento * 0.12;
-    const total = subtotalConDescuento;
-
-// -----------------------
-// Crear y confirmar PaymentIntent
-// -----------------------
-const paymentIntent = await stripe.paymentIntents.create({
-  amount: Math.round(total * 100), // en centavos
-  currency: "gtq", // o "usd" si usas dólares
-  description: "Pago de factura Tienda Online",
-  payment_method: paymentMethodId,
-  confirm: true,
-  automatic_payment_methods: {
-    enabled: true,
-    allow_redirects: "never", // 🔥 evita redirecciones y el error del return_url
-  },
-});
-
-
-    // ----------------------------
-    // Crear factura (pendiente)
-    // -----------------------------
+    // -----------------------
+    // Crear factura
+    // -----------------------
     const factura = await Factura.create(
-      {
-        usuarioId,
-        fecha: new Date(),
-        subtotal,
-        iva,
-        total,
-        promocionId,
-      },
+      { usuarioId, fecha: new Date(), subtotal, iva, total },
       { transaction: t }
     );
 
@@ -105,13 +72,12 @@ const paymentIntent = await stripe.paymentIntents.create({
       const qty = parseInt(item.cantidad, 10);
 
       const inventario = await Inventario.findByPk(invId, {
-        include: [{ model: Producto }],
+        include: [{ model: Producto, as: "producto" }],
       });
 
       if (!inventario) throw new Error("Inventario no encontrado");
-      if (inventario.cantidad < qty) {
-        throw new Error('Inventario insuficiente para ${inventario.producto.nombre');
-      }
+      if (inventario.cantidad < qty)
+        throw new Error(`Inventario insuficiente para ${inventario.producto.nombre}`);
 
       await FacturaDetalle.create(
         {
@@ -123,10 +89,14 @@ const paymentIntent = await stripe.paymentIntents.create({
         },
         { transaction: t }
       );
+
+      // Reducir stock
+      inventario.cantidad -= qty;
+      await inventario.save({ transaction: t });
     }
 
     // -----------------------
-    // Crear Envío (pendiente)
+    // Crear envío
     // -----------------------
     const envio = await Envio.create(
       {
@@ -141,9 +111,8 @@ const paymentIntent = await stripe.paymentIntents.create({
 
     await t.commit();
 
-    // ✅ Responder con client_secret para confirmar el pago en el frontend
     res.status(201).json({
-      message: "Factura creada. Confirmar pago en cliente.",
+      message: "Factura creada. Pago confirmado.",
       factura,
       envio,
       clientSecret: paymentIntent.client_secret,
@@ -152,36 +121,15 @@ const paymentIntent = await stripe.paymentIntents.create({
   } catch (error) {
     await t.rollback();
     console.error("ERROR /api/facturas ->", error);
-    res.status(500).json({ message: error.message || "Error al crear la factura" });
+    res
+      .status(500)
+      .json({ message: "Error al crear la factura", detalle: error.message });
   }
 };
 
-// Obtener todas las facturas (incluye total)
-exports.findAll = async (req, res) => {
-  try {
-    const facturas = await Factura.findAll({
-      include: [
-        {
-          model: FacturaDetalle,
-          include: [{ model: Inventario, include: [Producto] }],
-        },
-        { model: Envio },
-      ],
-      order: [["fecha", "DESC"]],
-    });
-
-    if (!facturas || facturas.length === 0) {
-      return res.status(404).json({ message: "No hay facturas registradas" });
-    }
-
-    res.status(200).json(facturas);
-  } catch (error) {
-    console.error("ERROR /api/facturas ->", error);
-    res.status(500).json({ message: "Error al obtener las facturas" });
-  }
-};
-
-// Obtener todas las facturas por usuario (incluye total)
+// -----------------------
+// Obtener facturas por usuario
+// -----------------------
 exports.findAllByUsuario = async (req, res) => {
   try {
     const { usuarioId } = req.params;
@@ -191,24 +139,64 @@ exports.findAllByUsuario = async (req, res) => {
       include: [
         {
           model: FacturaDetalle,
-          include: [{ model: Inventario, include: [Producto] }],
+          as: "detalles", // alias exacto de index.js
+          include: [
+            {
+              model: Inventario,
+              as: "inventario", // alias exacto de index.js
+              include: [{ model: Producto, as: "producto" }], // alias exacto
+            },
+          ],
         },
-        { model: Envio },
+        { model: Envio, as: "envio" }, // alias exacto
       ],
       order: [["fecha", "DESC"]],
     });
 
-    if (!facturas || facturas.length === 0) {
+    if (!facturas.length)
       return res
         .status(404)
         .json({ message: "El usuario no tiene facturas registradas" });
-    }
 
     res.status(200).json(facturas);
   } catch (error) {
     console.error("ERROR /api/facturas/usuario/:usuarioId ->", error);
-    res
-      .status(500)
-      .json({ message: "Error al obtener las facturas del usuario" });
+    res.status(500).json({
+      message: "Error al obtener las facturas del usuario",
+      detalle: error.message,
+    });
+  }
+};
+
+// -----------------------
+// Obtener todas las facturas
+// -----------------------
+exports.findAll = async (req, res) => {
+  try {
+    const facturas = await Factura.findAll({
+      include: [
+        {
+          model: FacturaDetalle,
+          as: "detalles",
+          include: [
+            {
+              model: Inventario,
+              as: "inventario",
+              include: [{ model: Producto, as: "producto" }],
+            },
+          ],
+        },
+        { model: Envio, as: "envio" },
+      ],
+      order: [["fecha", "DESC"]],
+    });
+
+    if (!facturas.length)
+      return res.status(404).json({ message: "No hay facturas registradas" });
+
+    res.status(200).json(facturas);
+  } catch (error) {
+    console.error("ERROR /api/facturas ->", error);
+    res.status(500).json({ message: "Error al obtener las facturas", detalle: error.message });
   }
 };

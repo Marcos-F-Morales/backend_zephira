@@ -1,10 +1,8 @@
-// routes/catalogo.routes.js
-module.exports = (app) => {
-  const catalogo = require("../controllers/catalogo.controller.js");
-  const router = require("express").Router();
+const express = require("express");
+const router = express.Router();
+const CatalogoController = require("../controllers/catalogo.controller.js");
 
-  router.get("/", catalogo.getAll);
-  router.get("/:id", catalogo.getById);
+router.get("/", CatalogoController.getAll);
+router.get("/:id", CatalogoController.getById);
 
-  app.use("/api/catalogo", router);
-};
+module.exports = router;

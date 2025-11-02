@@ -50,145 +50,56 @@ db.wishlists = require("./Wishlist.model.js")(sequelize, DataTypes);
 db.wishlistDetalles = require("./wishlistdetalle.model.js")(sequelize, DataTypes);
 
 // ===========================================================
-// 🔹 Relaciones entre modelos (con alias consistentes)
+// 🔹 Relaciones entre modelos
 // ===========================================================
 
-// Productos, Colores, Tallas, Sucursales, Inventario
-db.productos.hasMany(db.inventarios, {
-  as: "inventarios",
-  foreignKey: "productoId",
-});
-db.inventarios.belongsTo(db.productos, {
-  as: "producto",
-  foreignKey: "productoId",
-});
+// Productos → Inventarios → Color, Talla, Sucursal
+db.productos.hasMany(db.inventarios, { as: "inventarios", foreignKey: "productoId" });
+db.inventarios.belongsTo(db.productos, { as: "producto", foreignKey: "productoId" });
 
-db.colores.hasMany(db.inventarios, {
-  as: "inventarios",
-  foreignKey: "colorId",
-});
-db.inventarios.belongsTo(db.colores, {
-  as: "color",
-  foreignKey: "colorId",
-});
+db.colores.hasMany(db.inventarios, { as: "inventarios", foreignKey: "colorId" });
+db.inventarios.belongsTo(db.colores, { as: "color", foreignKey: "colorId" });
 
-db.tallas.hasMany(db.inventarios, {
-  as: "inventarios",
-  foreignKey: "tallaId",
-});
-db.inventarios.belongsTo(db.tallas, {
-  as: "talla",
-  foreignKey: "tallaId",
-});
+db.tallas.hasMany(db.inventarios, { as: "inventarios", foreignKey: "tallaId" });
+db.inventarios.belongsTo(db.tallas, { as: "talla", foreignKey: "tallaId" });
 
-db.sucursales.hasMany(db.inventarios, {
-  as: "inventarios",
-  foreignKey: "sucursalId",
-});
-db.inventarios.belongsTo(db.sucursales, {
-  as: "sucursal",
-  foreignKey: "sucursalId",
-});
+db.sucursales.hasMany(db.inventarios, { as: "inventarios", foreignKey: "sucursalId" });
+db.inventarios.belongsTo(db.sucursales, { as: "sucursal", foreignKey: "sucursalId" });
 
-// Usuario -> Carrito -> CarritoDetalle -> Inventario
+// Usuarios → Carrito → CarritoDetalle → Inventario
 db.usuarios.hasOne(db.carritos, { as: "carrito", foreignKey: "usuarioId" });
 db.carritos.belongsTo(db.usuarios, { as: "usuario", foreignKey: "usuarioId" });
 
-db.carritos.hasMany(db.carritoDetalles, {
-  as: "detalles",
-  foreignKey: "carritoId",
-});
-db.carritoDetalles.belongsTo(db.carritos, {
-  as: "carrito",
-  foreignKey: "carritoId",
-});
+db.carritos.hasMany(db.carritoDetalles, { as: "detalles", foreignKey: "carritoId" });
+db.carritoDetalles.belongsTo(db.carritos, { as: "carrito", foreignKey: "carritoId" });
 
-db.inventarios.hasMany(db.carritoDetalles, {
-  as: "detalles",
-  foreignKey: "inventarioId",
-});
-db.carritoDetalles.belongsTo(db.inventarios, {
-  as: "inventario",
-  foreignKey: "inventarioId",
-});
+db.inventarios.hasMany(db.carritoDetalles, { as: "detalles", foreignKey: "inventarioId" });
+db.carritoDetalles.belongsTo(db.inventarios, { as: "inventario", foreignKey: "inventarioId" });
 
-// FacturaEncabezado -> Usuario, FacturaDetalle, Envío
-db.usuarios.hasMany(db.facturaEncabezados, {
-  as: "facturas",
-  foreignKey: "usuarioId",
-});
-db.facturaEncabezados.belongsTo(db.usuarios, {
-  as: "usuario",
-  foreignKey: "usuarioId",
-});
+// FacturaEncabezado → Usuario, FacturaDetalle, Envío
+db.usuarios.hasMany(db.facturaEncabezados, { as: "facturas", foreignKey: "usuarioId" });
+db.facturaEncabezados.belongsTo(db.usuarios, { as: "usuario", foreignKey: "usuarioId" });
 
-db.facturaEncabezados.hasMany(db.facturaDetalles, {
-  as: "detalles",
-  foreignKey: "facturaId",
-});
-db.facturaDetalles.belongsTo(db.facturaEncabezados, {
-  as: "factura",
-  foreignKey: "facturaId",
-});
+db.facturaEncabezados.hasMany(db.facturaDetalles, { as: "detalles", foreignKey: "facturaId" });
+db.facturaDetalles.belongsTo(db.facturaEncabezados, { as: "factura", foreignKey: "facturaId" });
 
-db.inventarios.hasMany(db.facturaDetalles, {
-  as: "detallesFactura",
-  foreignKey: "inventarioId",
-});
-db.facturaDetalles.belongsTo(db.inventarios, {
-  as: "inventario",
-  foreignKey: "inventarioId",
-});
+db.inventarios.hasMany(db.facturaDetalles, { as: "detallesFactura", foreignKey: "inventarioId" });
+db.facturaDetalles.belongsTo(db.inventarios, { as: "inventario", foreignKey: "inventarioId" });
 
-db.facturaEncabezados.hasOne(db.envios, {
-  as: "envio",
-  foreignKey: "facturaId",
-});
-db.envios.belongsTo(db.facturaEncabezados, {
-  as: "factura",
-  foreignKey: "facturaId",
-});
+db.facturaEncabezados.hasOne(db.envios, { as: "envio", foreignKey: "facturaId" });
+db.envios.belongsTo(db.facturaEncabezados, { as: "factura", foreignKey: "facturaId" });
 
-db.estadoEnvios.hasMany(db.envios, {
-  as: "envios",
-  foreignKey: "estadoId",
-});
-db.envios.belongsTo(db.estadoEnvios, {
-  as: "estado",
-  foreignKey: "estadoId",
-});
+db.estadoEnvios.hasMany(db.envios, { as: "envios", foreignKey: "estadoId" });
+db.envios.belongsTo(db.estadoEnvios, { as: "estado", foreignKey: "estadoId" });
 
 // Wishlist
-db.usuarios.hasMany(db.wishlists, {
-  as: "wishlists",
-  foreignKey: "usuarioId",
-});
-db.wishlists.belongsTo(db.usuarios, {
-  as: "usuario",
-  foreignKey: "usuarioId",
-});
+db.usuarios.hasMany(db.wishlists, { as: "wishlists", foreignKey: "usuarioId" });
+db.wishlists.belongsTo(db.usuarios, { as: "usuario", foreignKey: "usuarioId" });
 
-db.wishlists.hasMany(db.wishlistDetalles, {
-  as: "detalles",
-  foreignKey: "wishlistId",
-});
-db.wishlistDetalles.belongsTo(db.wishlists, {
-  as: "wishlist",
-  foreignKey: "wishlistId",
-});
+db.wishlists.hasMany(db.wishlistDetalles, { as: "detalles", foreignKey: "wishlistId" });
+db.wishlistDetalles.belongsTo(db.wishlists, { as: "wishlist", foreignKey: "wishlistId" });
 
-db.inventarios.hasMany(db.wishlistDetalles, {
-  as: "wishlistDetalles",
-  foreignKey: "inventarioId",
-});
-db.wishlistDetalles.belongsTo(db.inventarios, {
-  as: "inventario",
-  foreignKey: "inventarioId",
-});
+db.inventarios.hasMany(db.wishlistDetalles, { as: "wishlistDetalles", foreignKey: "inventarioId" });
+db.wishlistDetalles.belongsTo(db.inventarios, { as: "inventario", foreignKey: "inventarioId" });
 
-// ✅ Eliminadas todas las referencias a promociones y productoPromociones
-
-// ===========================================================
-// 🔹 Exportación final
-// ===========================================================
 module.exports = db;
