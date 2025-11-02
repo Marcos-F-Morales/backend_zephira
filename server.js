@@ -10,7 +10,7 @@ const app = express();
 // ==========================
 const allowedOrigins = [
   "http://localhost:5173",
-  "zephira.vercel.app",
+  "https://zephira.vercel.app",
   "https://zephira-frontend.onrender.com"
 ];
 
