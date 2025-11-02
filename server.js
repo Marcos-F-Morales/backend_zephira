@@ -9,21 +9,28 @@ const app = express();
 // 🔹 CONFIGURACIÓN DE CORS
 // ==========================
 const allowedOrigins = [
-  "http://localhost:5173",
-  "https://zephira.online",
-  "https://zephira-frontend.onrender.com"
+  "http://localhost:5173",          // desarrollo local
+  "https://zephira.online",         // frontend producción
+  "https://zephira-frontend.onrender.com" // frontend Render
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin) return callback(null, true); // Permite Postman
+    // Permitir solicitudes sin origin (Postman, CURL)
+    if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
     return callback(new Error("CORS no permitido para este origen"));
   },
-  credentials: true,
+  credentials: true, // permite cookies y auth headers
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // todos los métodos
+  allowedHeaders: ["Content-Type", "Authorization"], // headers permitidos
 }));
 
-app.options(/.*/, cors());
+// Asegura que OPTIONS responda correctamente
+app.options("*", cors({
+  origin: allowedOrigins,
+  credentials: true
+}));
 
 // ==========================
 // Middleware
