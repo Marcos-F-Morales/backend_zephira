@@ -9,27 +9,21 @@ const app = express();
 // 🔹 CONFIGURACIÓN DE CORS
 // ==========================
 const allowedOrigins = [
-  "http://localhost:5173",          // desarrollo local
-  "https://zephira.online",         // frontend producción
-  "https://zephira-frontend.onrender.com" // frontend Render
+  "http://localhost:5173",
+  "https://zephira.online",
+  "https://zephira-frontend.onrender.com"
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Permitir solicitudes sin origin (Postman, CURL)
+    // Permite solicitudes sin origin (Postman, CURL)
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
     return callback(new Error("CORS no permitido para este origen"));
   },
   credentials: true, // permite cookies y auth headers
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // todos los métodos
-  allowedHeaders: ["Content-Type", "Authorization"], // headers permitidos
-}));
-
-// Asegura que OPTIONS responda correctamente
-app.options("*", cors({
-  origin: allowedOrigins,
-  credentials: true
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
 // ==========================
@@ -44,12 +38,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 const db = require("./app/models");
 
 db.sequelize.sync({ alter: true })
-  .then(() => {
-    console.log("✅ Conexión con la base de datos y sincronización exitosa.");
-  })
-  .catch(err => {
-    console.error("❌ Error al sincronizar la base de datos:", err);
-  });
+  .then(() => console.log("✅ Conexión con la base de datos y sincronización exitosa."))
+  .catch(err => console.error("❌ Error al sincronizar la base de datos:", err));
 
 // ==========================
 // Ruta raíz
@@ -81,6 +71,4 @@ app.use("/api/dashboard", require("./app/routes/dashboard.routes.js"));
 // Servidor
 // ==========================
 const PORT = process.env.PORT || 8081;
-app.listen(PORT, () => {
-  console.log(`🚀 Server is running on port ${PORT}.`);
-});
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
